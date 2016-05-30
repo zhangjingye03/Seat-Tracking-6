@@ -1,0 +1,120 @@
+<html>
+<head>
+	<title>Seat Tracking 6</title>
+</head>
+<style>
+	.inbox {
+		border-radius: 3px;
+		border: 3px solid black;
+		height: 30px;
+		width: 40px;
+		margin: 15px 20px;
+		float: left;
+	}
+	.current {
+		background-color: red !important;
+		border: 3px solid red;
+	}
+	.start {
+		background-color: blue;
+		border: 3px solid blue;
+	}
+</style>
+<script src="jquery-1.11.2.min.js"></script>
+<body>
+	<h1 onclick="adjustSpeed();">&nbsp;Seat Tracking 6</h1>
+	<div id="main" style="width:380px">
+
+	</div>
+	<div style="float:none">
+		<br><br>
+		<p id="info"></p>
+	</div>
+</body>
+<script>
+	$(function(){
+		for(y=0;y<4;y++){
+			if(y==3){//the last line
+				$("<div class='inbox' data-x='0' data-y='3' style='width:126px;' onclick='play(this.dataset.x, this.dataset.y)'></div>").appendTo("#main");
+				$("<div class='inbox' data-x='1' data-y='3' style='width:126px;' onclick='play(this.dataset.x, this.dataset.y)'></div>").appendTo("#main");
+			  continue;
+			}
+			for(x=0;x<4;x++){
+				$("<div class='inbox' data-x='" + x + "' data-y='" + y + "' onclick='play(this.dataset.x, this.dataset.y)'></div>").appendTo("#main");
+			}
+		}
+	});
+
+	function change(x,y,method){
+		if(method==1){
+			//how even->orig odd->after
+			how=[
+				[0,0],[1,1],
+				[1,0],[0,1],
+				[2,0],[0,2],
+				[3,0],[0,0],
+				[0,1],[1,2],
+				[1,1],[2,2],
+				[2,1],[1,0],
+				[3,1],[2,0],
+				[0,2],[0,3],
+				[1,2],[3,1],
+				[2,2],[1,3],
+				[3,2],[2,1],
+				[0,3],[3,0],
+				[1,3],[3,2]
+			];
+			//query for even numbers to get orig seat
+			found=-1;
+			for(n=0;n<how.length;n+=2){
+				if(how[n][0]==x && how[n][1]==y){
+					found=n; continue;
+				}
+			}
+			if(found<0) {alert("Failed to lookup"); return;}
+			return [ how[found+1][0], how[found+1][1] ];
+		}
+	}
+
+	//c: current   p: previous
+	tid = cx = cy = px = py = ox = oy = week = -1;
+	speed=100; ignoreWeek=0;
+	function play(x,y){
+		if(tid!=-1){
+			//stop previous animation
+			initialize(); return;
+		}
+		$(".inbox").removeClass("current").removeClass("start");
+		ox=cx=x; oy=cy=y; week=0;
+		$("[data-x=" + cx + "][data-y=" + cy +"]").addClass("start");
+		tid = setInterval("animate()",speed);
+	}
+
+	function adjustSpeed(){
+		speed=prompt("Flow Interval (ms) :", 100);
+	}
+
+	function initialize(){
+		window.clearInterval(tid);
+		tid = cx = cy = week = ox = oy = -1;
+		ignoreWeek=0;
+		return;
+	}
+
+	function animate(){
+		px=cx; py=cy; week++;
+		res=change(cx,cy,1);
+		cx=res[0]; cy=res[1];
+		$("[data-x=" + px + "][data-y=" + py +"]").removeClass("current");
+		$("[data-x=" + cx + "][data-y=" + cy +"]").addClass("current");
+		if(cx==ox && cy==oy && !ignoreWeek){
+			if(!confirm("You have returned to the original place at week "+week+"\n\nDo you want to continue?")){
+				initialize();
+				return;
+			}else{
+				ignoreWeek=1;
+			}
+		}
+	}
+</script>
+</html>
